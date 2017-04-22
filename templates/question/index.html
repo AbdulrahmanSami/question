@@ -1,0 +1,71 @@
+{% extends 'question/game_base.html' %}
+{% block content %}
+{% load staticfiles %}
+
+    <div id="start">
+
+        <img id="welcomeimg" src="{% static 'question/image/HPC.png' %}" >
+        <h2>اهلا بك في موقع اسئلة&nbsp;{{ question_session.title }}&nbsp;:</h2>
+        <h2>اخر الاسئلة المضافة :</h2>
+        <div class="questions">
+            <p>
+            </p>
+        </div>
+    </div>
+    <div class="start">
+        {% for data in old_question %}
+            <p class="intro" id="startq">{{ data.question_text }}</p>
+        {%endfor%}
+    </div>
+    <form role="form" action="{% url 'question:question-add' question_session.pk %}" method="post" style="color:black">
+        {% csrf_token %}
+        <br>
+        <p>{{ form }}</p>
+                <br>
+        <button type="submit" value="">Submit</button>
+    </form>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+    $.fn.extend({
+        animateCss: function (animationName) {
+        var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+        this.addClass('animated ' + animationName).one(animationEnd, function() {
+        $(this).removeClass('animated ' + animationName);
+        });
+        }
+    });
+    var lastPk = {{last_pk}}
+    function myFunction() {
+        setInterval(function(){
+            $.ajax({
+                type: 'POST',
+                data: {'last_pk': lastPk,
+                       'question_session_pk': {{ question_session.id }},},
+                url: "{% url 'question:handle_questioning_ajax' question_session.pk %}",
+                success: function(response){
+
+                    if (response.new_questions.length > 0){
+                    var count = response.new_questions.length;
+
+                    for(var i = 0; i < count; i++) {
+                            var item = response.new_questions[i];
+                            console.log("hello")
+                            console.log(item)
+                            console.log(response.new_questions)
+                            $(".questions").prepend("<div class='question'><p class='intro'>" + item + "</p></div>" ).animateCss('zoomIn')
+                    }
+                        lastPk = response.new_last_pk
+                        }
+                    else {
+
+                    }
+                }
+                })
+        ; }, 20000);
+    }
+    $(document).ready(function(){
+    $(".start").animateCss('zoomIn')
+    myFunction() })
+    </script>
+{% endblock %}
